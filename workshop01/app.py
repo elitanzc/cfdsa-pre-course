@@ -12,8 +12,7 @@ texts = [
 ]
 
 def choose_random_text(texts):
-    text = random.choice(texts)
-    return text
+    return random.choice(texts)
 
 @app.route("/")
 def index():
