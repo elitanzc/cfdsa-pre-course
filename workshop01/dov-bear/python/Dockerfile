@@ -15,4 +15,6 @@ ENV INSTANCE_HASH="6194ed6424df"
 
 RUN pip install -r requirements.txt
 
+EXPOSE ${PORT}
+
 ENTRYPOINT bash run.sh
