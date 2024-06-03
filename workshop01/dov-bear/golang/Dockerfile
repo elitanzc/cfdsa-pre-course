@@ -30,6 +30,7 @@ ENV PORT=3000
 
 EXPOSE ${PORT}
 
+# CMD line must return either 0 (healthy) or 1 (unhealthy)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
   CMD curl -s http://localhost:${PORT}/healthz || exit 1
 
