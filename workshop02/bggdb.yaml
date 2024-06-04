@@ -6,20 +6,20 @@ metadata:
   name: bggdb-deploy
   namespace: bggns
   labels:
-    app: bggdb
+    app: bgg
     name: bggdb-deploy
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: bggdb
+      app: bgg
       name: bggdb-po
   template:
     metadata:
       name: bggdb-po
       namespace: bggns
       labels:
-        app: bggdb
+        app: bgg
         name: bggdb-po
     spec:
       containers:
@@ -38,12 +38,12 @@ metadata:
   name: bggdb-svc
   namespace: bggns
   labels:
-    app: bggdb
+    app: bgg
     name: bggdb-svc
 spec:
   type: ClusterIP
   selector:
-    app: bggdb
+    app: bgg
     name: bggdb-po
   ports:
     - name: bggdb-svc-port

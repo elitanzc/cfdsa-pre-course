@@ -4,18 +4,18 @@ kind: Namespace
 metadata:
   name: bggns
 
-# ---
-# apiVersion: v1
-# kind: ConfigMap
-# metadata:
-#   name: bggapp-cm
-#   namespace: bggns
-#   labels:
-#     app: bggapp
-#     name: bggapp-cm
-# data:
-#   BGG_DB_USER: root
-#   BGG_DB_HOST: bggdb-svc.bggns.svc.cluster.local
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bggapp-cm
+  namespace: bggns
+  labels:
+    app: bgg
+    name: bggapp-cm
+data:
+  BGG_DB_USER: root
+  BGG_DB_HOST: bggdb-svc.bggns.svc.cluster.local
 
 ---
 apiVersion: v1
@@ -24,7 +24,7 @@ metadata:
   name: bggapp-secret
   namespace: bggns
   labels:
-    app: bggapp
+    app: bgg
     name: bggapp-secret
 type: Opaque
 data:
