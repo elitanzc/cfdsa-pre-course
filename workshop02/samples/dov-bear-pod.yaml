@@ -1,0 +1,28 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dov-po
+  namespace: myns
+  labels: # any labels as standardised by organisation, for filtering
+    app: dov
+    name: dov-po
+spec:
+  containers:
+    - name: dov-container # like the --name when you do docker run container
+      image: chukmunnlee/cfdsa-dov-bear:v1.1 # elitanzc/cfdsa-dov-bear:golang-v2
+      imagePullPolicy: IfNotPresent
+      ports: 
+        - containerPort: 3000 # the port the container exposes
+      env:
+        - name: INSTANCE_NAME
+          value: my-first-pod-heheh
+        - name: INSTANCE_HASH
+          valueFrom: # gets value from somewhere else
+            fieldRef: # requires a fieldPath
+              fieldPath: status.podIP # can get from metadata too or create config file and pass them in
+      # readinessProbe: # kubernetes will keep probing until 200
+      livenessProbe:
+        httpGet: # performed outside container, container no need curl
+          path: /healthz
+          port: 3000
