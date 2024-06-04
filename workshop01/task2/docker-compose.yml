@@ -1,0 +1,30 @@
+services:
+  mydb:
+    image: stackupiss/northwind-db:v1
+    # build:
+    #   - context: ./db #this builds the Dockerfile inside the relative path ./db
+    volumes:
+      - myvol:/var/lib/mysql
+    networks:
+      - mynet
+  myapp:
+    image: stackupiss/northwind-app:v1
+    # build:
+    #   - context: ./app #this builds the Dockerfile inside the relative path ./app
+    ports:
+      - 8080-8090:3000
+      # can also give a range of ports e.g. 8080-8090:3000 so that if 8080 is occupied another port in range will be used
+    networks:
+      - mynet
+    environment:
+      - DB_HOST=mydb
+      - DB_USER=root
+      - DB_PASSWORD=changeit
+    # depends_on:
+    #   - appdb
+
+volumes:
+  myvol:
+
+networks:
+  mynet:
