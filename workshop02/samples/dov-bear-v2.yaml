@@ -11,6 +11,9 @@ metadata:
     name: dov-cm
 data:
   INSTANCE_NAME: name from configmap heheh
+  db.conf: | # creates file with the following contents
+    contents of the db.conf file
+    line 2 of the file
 
 ---
 apiVersion: v1
@@ -52,8 +55,29 @@ spec:
         app: dov
         name: dov-po
     spec:
+      volumes:
+        - name: cm-vol
+          configMap:
+            name: dov-cm
+        - name: secret-vol
+          secret:
+            secretName: dov-secret
+        # - name: dov-vol
+        #   hostPath: # written into the node
+        #     path: /tmp/mydir
+        #     type: DirectoryOrCreate # creates directory on node path if not exist
+        #   emptyDir: {}
+        #   ^slightly better than hostPath, creates a directory in the node, but different pods can't see
+        #   when pod is deleted dir is deleted too
+        #   used for lightweight communication between 2 containers in a pod
       containers:
         - name: dov-container # like the --name when you do docker run container
+          volumeMounts:
+            - name: cm-vol
+              mountPath: /opt/configmap
+            - name: secret-vol
+              mountPath: /opt/secrets
+              readOnly: true
           image: chukmunnlee/cfdsa-dov-bear:v1.1 # elitanzc/cfdsa-dov-bear:golang-v2
           imagePullPolicy: IfNotPresent
           ports: 
