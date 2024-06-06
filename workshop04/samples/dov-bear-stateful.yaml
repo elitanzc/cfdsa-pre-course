@@ -1,0 +1,247 @@
+---
+# HEADLESS service is mandatory for STATEFUL sets
+apiVersion: v1
+kind: Service
+metadata:
+  name: dov-hsvc
+  namespace: myns
+  labels:
+    app: dov
+    name: dov-svc
+spec:
+  clusterIP: None
+  selector: # doesn't have matchLabels etc for some reason
+    app: dov
+    name: dov-po
+  ports:
+    - name: dov-svc-port
+      port: 8080 # service port
+      targetPort: dov-port # container port
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: dov-sts
+  namespace: myns
+  labels:
+    app: dov
+    name: dov-sts
+spec: # same as Deployment except that we have serviceName
+  replicas: 4
+  selector: 
+    matchLabels: # pods that belong to this deployment has these labels
+      app: dov
+      name: dov-po
+    # matchExpressions: key operation value
+  serviceName: dov-hsvc
+  template: # define pods in here
+    # start of pod template, i.e. same as dov-bear-pod.yaml without apiVersion and kind
+    metadata:
+      name: dov-po
+      namespace: myns
+      labels: # any labels as standardised by organisation, for filtering
+        app: dov
+        name: dov-po
+    spec:
+      volumes:
+        - name: cm-vol
+          configMap:
+            name: dov-cm
+        - name: secret-vol
+          secret:
+            secretName: dov-secret
+        # - name: dov-vol
+        #   hostPath: # written into the node
+        #     path: /tmp/mydir
+        #     type: DirectoryOrCreate # creates directory on node path if not exist
+        #   emptyDir: {}
+        #   ^slightly better than hostPath, creates a directory in the node, but different pods can't see
+        #   when pod is deleted dir is deleted too
+        #   used for lightweight communication between 2 containers in a pod
+      containers:
+        - name: dov-container # like the --name when you do docker run container
+          volumeMounts:
+            - name: cm-vol
+              mountPath: /opt/configmap
+            - name: secret-vol
+              mountPath: /opt/secrets
+              readOnly: true
+          image: chukmunnlee/cfdsa-dov-bear:v1.1 # elitanzc/cfdsa-dov-bear:golang-v2
+          imagePullPolicy: IfNotPresent
+          ports: 
+            - name: dov-port # max 16 chars, no . and _
+              containerPort: 3000 # the port the container exposes
+          envFrom: # instead of using env in v1
+            - configMapRef:
+                name: dov-cm
+            # - secretRef:
+            #     name: dov-secret
+          env:
+            - name: INSTANCE_HASH
+              valueFrom: 
+                fieldRef:
+                  fieldPath: status.podIP
+          livenessProbe:
+            httpGet: # performed outside container, container no need curl
+              path: /healthz
+              port: 3000
+          resources:
+            requests: # lower limit
+              cpu: 16m # 200m
+              memory: 16Mi #256Mi
+            limits: # upperbound
+              cpu: 16m
+              memory: 16Mi
+
+
+---
+# create config and secret files
+# this separates the configuration from our resource
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dov-cm
+  namespace: myns
+  labels: # any labels as standardised by organisation, for filtering
+    app: dov
+    name: dov-cm
+data:
+  INSTANCE_NAME: name from configmap heheh
+  db.conf: | # creates file with the following contents
+    contents of the db.conf file
+    line 2 of the file
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dov-secret
+  namespace: myns
+  labels: # any labels as standardised by organisation, for filtering
+    app: dov
+    name: dov-secret
+type: Opaque
+data:
+  INSTANCE_HASH: dGhpcyBpcyBhIHNlY3JldA== # need to convert everything into base64, cannot use string directly
+  # on mac can use the command echo -n 'this is a secret' | base64
+
+---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: dov-deploy
+#   # generateName: dov-deploy- # use this prefix so can create multiple same deployments
+#   namespace: myns
+#   labels: # any labels as standardised by organisation, for filtering
+#     app: dov
+#     name: dov-deploy
+# spec:
+#   replicas: 4
+#   selector: 
+#     matchLabels: # pods that belong to this deployment has these labels
+#       app: dov
+#       name: dov-po
+#     # matchExpressions: key operation value
+#   template: # define pods in here
+#     # start of pod template, i.e. same as dov-bear-pod.yaml without apiVersion and kind
+#     metadata:
+#       name: dov-po
+#       namespace: myns
+#       labels: # any labels as standardised by organisation, for filtering
+#         app: dov
+#         name: dov-po
+#     spec:
+#       volumes:
+#         - name: cm-vol
+#           configMap:
+#             name: dov-cm
+#         - name: secret-vol
+#           secret:
+#             secretName: dov-secret
+#         # - name: dov-vol
+#         #   hostPath: # written into the node
+#         #     path: /tmp/mydir
+#         #     type: DirectoryOrCreate # creates directory on node path if not exist
+#         #   emptyDir: {}
+#         #   ^slightly better than hostPath, creates a directory in the node, but different pods can't see
+#         #   when pod is deleted dir is deleted too
+#         #   used for lightweight communication between 2 containers in a pod
+#       containers:
+#         - name: dov-container # like the --name when you do docker run container
+#           volumeMounts:
+#             - name: cm-vol
+#               mountPath: /opt/configmap
+#             - name: secret-vol
+#               mountPath: /opt/secrets
+#               readOnly: true
+#           image: chukmunnlee/cfdsa-dov-bear:v1.1 # elitanzc/cfdsa-dov-bear:golang-v2
+#           imagePullPolicy: IfNotPresent
+#           ports: 
+#             - name: dov-port # max 16 chars, no . and _
+#               containerPort: 3000 # the port the container exposes
+#           envFrom: # instead of using env in v1
+#             - configMapRef:
+#                 name: dov-cm
+#             # - secretRef:
+#             #     name: dov-secret
+#           env:
+#             - name: INSTANCE_HASH
+#               valueFrom: 
+#                 fieldRef:
+#                   fieldPath: status.podIP
+#           livenessProbe:
+#             httpGet: # performed outside container, container no need curl
+#               path: /healthz
+#               port: 3000
+#           resources:
+#             requests: # lower limit
+#               cpu: 16m # 200m
+#               memory: 16Mi #256Mi
+#             limits: # upperbound
+#               cpu: 16m
+#               memory: 16Mi
+
+# ---
+# # service
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: dov-svc
+#   namespace: myns
+#   labels:
+#     app: dov
+#     name: dov-svc
+# spec:
+#   type: ClusterIP
+#   selector: # doesn't have matchLabels etc for some reason
+#     app: dov
+#     name: dov-po
+#   ports:
+#     - name: dov-svc-port
+#       port: 8080 # service port
+#       targetPort: dov-port # container port
+
+# ---
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: dov-ing
+#   namespace: myns
+#   labels:
+#     app: dov
+#     name: dov-ing
+# spec:
+#   ingressClassName: nginx # see k get ingressClass
+#   rules:
+#     - host: dov-bear.139.59.193.132.nip.io # 139.59.193.132 is the external ip of my-ingress-ingress-nginx-controller, from k get svc -A
+#       http:
+#         paths:
+#           - path: /
+#             pathType: Prefix # Exact
+#             backend:
+#               service:
+#                 name: dov-svc
+#                 port: 
+#                   name: dov-svc-port
+#                   # number: 3000

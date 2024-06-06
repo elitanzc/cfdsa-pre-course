@@ -125,6 +125,27 @@ spec:
       port: 8080 # service port
       targetPort: dov-port # container port
 
+
+---
+# HEADLESS service
+apiVersion: v1
+kind: Service
+metadata:
+  name: dov-hsvc
+  namespace: myns
+  labels:
+    app: dov
+    name: dov-svc
+spec:
+  clusterIP: None
+  selector: # doesn't have matchLabels etc for some reason
+    app: dov
+    name: dov-po
+  ports:
+    - name: dov-svc-port
+      port: 8080 # service port
+      targetPort: dov-port # container port
+
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
