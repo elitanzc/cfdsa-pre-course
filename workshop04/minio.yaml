@@ -57,6 +57,8 @@ spec:
         app: minio
         name: minio-po
     spec:
+      securityContext:
+        fsGroup: 1001
       containers:
         - name: minio-container
           image: bitnami/minio:latest
