@@ -68,7 +68,7 @@ items:
   metadata:
     annotations:
       kubectl.kubernetes.io/last-applied-configuration: |
-        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"dov","env":"development","name":"dov-deploy"},"name":"dev-dov-deploy","namespace":"dev-myns"},"spec":{"replicas":4,"selector":{"matchLabels":{"app":"dov","env":"development","name":"dov-po"}},"template":{"metadata":{"labels":{"app":"dov","env":"development","name":"dov-po"},"name":"dov-po","namespace":"myns"},"spec":{"containers":[{"env":[{"name":"INSTANCE_HASH","valueFrom":{"fieldRef":{"fieldPath":"status.podIP"}}}],"envFrom":[{"configMapRef":{"name":"dev-dov-cm"}}],"image":"chukmunnlee/cfdsa-dov-bear:v1.1","imagePullPolicy":"IfNotPresent","livenessProbe":{"httpGet":{"path":"/healthz","port":3000}},"name":"dov-container","ports":[{"containerPort":3000,"name":"dov-port"}],"resources":{"limits":{"cpu":"16m","memory":"16Mi"},"requests":{"cpu":"16m","memory":"16Mi"}},"volumeMounts":[{"mountPath":"/opt/configmap","name":"cm-vol"},{"mountPath":"/opt/secrets","name":"secret-vol","readOnly":true}]}],"volumes":[{"configMap":{"name":"dev-dov-cm"},"name":"cm-vol"},{"name":"secret-vol","secret":{"secretName":"dev-dov-secret"}}]}}}}
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"dov","env":"development","name":"dov-deploy"},"name":"dev-dov-deploy","namespace":"dev-myns"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"dov","env":"development","name":"dov-po"}},"template":{"metadata":{"labels":{"app":"dov","env":"development","name":"dov-po"},"name":"dov-po","namespace":"myns"},"spec":{"containers":[{"env":[{"name":"SERVICE_NAME","value":"dev-dov-svc"},{"name":"INSTANCE_HASH","valueFrom":{"fieldRef":{"fieldPath":"status.podIP"}}}],"envFrom":[{"configMapRef":{"name":"dev-dov-cm"}}],"image":"chukmunnlee/dov-bear:v5","imagePullPolicy":"IfNotPresent","livenessProbe":{"httpGet":{"path":"/healthz","port":3000}},"name":"dov-container","ports":[{"containerPort":3000,"name":"dov-port"}],"resources":{"limits":{"cpu":"16m","memory":"16Mi"},"requests":{"cpu":"16m","memory":"16Mi"}},"volumeMounts":[{"mountPath":"/opt/configmap","name":"cm-vol"},{"mountPath":"/opt/secrets","name":"secret-vol","readOnly":true}]}],"volumes":[{"configMap":{"name":"dev-dov-cm"},"name":"cm-vol"},{"name":"secret-vol","secret":{"secretName":"dev-dov-secret"}}]}}}}
     labels:
       app: dov
       env: development
@@ -76,7 +76,7 @@ items:
     name: dev-dov-deploy
     namespace: dev-myns
   spec:
-    replicas: 4
+    replicas: 1
     selector:
       matchLabels:
         app: dov
@@ -93,6 +93,8 @@ items:
       spec:
         containers:
         - env:
+          - name: SERVICE_NAME
+            value: dev-dov-svc
           - name: INSTANCE_HASH
             valueFrom:
               fieldRef:
@@ -100,7 +102,7 @@ items:
           envFrom:
           - configMapRef:
               name: dev-dov-cm
-          image: chukmunnlee/cfdsa-dov-bear:v1.1
+          image: chukmunnlee/dov-bear:v5
           imagePullPolicy: IfNotPresent
           livenessProbe:
             httpGet:
@@ -130,30 +132,5 @@ items:
         - name: secret-vol
           secret:
             secretName: dev-dov-secret
-- apiVersion: networking.k8s.io/v1
-  kind: Ingress
-  metadata:
-    annotations:
-      kubectl.kubernetes.io/last-applied-configuration: |
-        {"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{},"labels":{"app":"dov","env":"development","name":"dov-ing"},"name":"dev-dov-ing","namespace":"dev-myns"},"spec":{"ingressClassName":"nginx","rules":[{"host":"dov-bear.139.59.193.132.nip.io","http":{"paths":[{"backend":{"service":{"name":"dev-dov-svc","port":{"name":"dov-svc-port"}}},"path":"/","pathType":"Prefix"}]}}]}}
-    labels:
-      app: dov
-      env: development
-      name: dov-ing
-    name: dev-dov-ing
-    namespace: dev-myns
-  spec:
-    ingressClassName: nginx
-    rules:
-    - host: dov-bear.139.59.193.132.nip.io
-      http:
-        paths:
-        - backend:
-            service:
-              name: dev-dov-svc
-              port:
-                name: dov-svc-port
-          path: /
-          pathType: Prefix
 kind: List
 metadata: {}

@@ -94,6 +94,8 @@ spec:
             # - secretRef:
             #     name: dov-secret
           env:
+            - name: SERVICE_NAME
+              value: dov-svc
             - name: INSTANCE_HASH
               valueFrom: 
                 fieldRef:
