@@ -1,0 +1,29 @@
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: dov-hpa
+  namespace: myns
+  labels:
+    app: dov
+    name: dov-hpa
+spec:
+  minReplicas: 1
+  maxReplicas: 6
+  scaleTargetRef: # what object are we scaling
+    apiVersion: apps/v1 # for deployment
+    kind: Deployment
+    name: dov-deploy
+  metrics:
+    - type: Resource # cpu resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization # Value/ AverageValue
+          averageUtilization: 60 # 60% utilization
+    - type: Resource # memory
+      resource:
+        name: memory
+        target: 
+          type: Utilization
+          averageUtilization: 60
