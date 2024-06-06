@@ -1,0 +1,105 @@
+---
+# headless service
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-hsvc
+  namespace: minions
+  labels:
+    app: minio
+    name: minio-hsvc
+spec:
+  clusterIP: None
+  selector:
+    app: minio
+    name: minio-po
+  ports:
+    - name: minio-hsvc-portc
+      port: 9000
+      targetPort: minio-portc
+    - name: minio-hsvc-portw
+      port: 9090
+      targetPort: minio-portw
+
+---
+# Stateful set with 4
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: minio-sts
+  namespace: minions
+  labels:
+    app: minio
+    name: minio-sts
+spec:
+  serviceName: minio-hsvc
+  replicas: 4
+  selector:
+    matchLabels:
+      app: minio
+      name: minio-po
+  volumeClaimTemplates:
+    - metadata:
+        name: minio-pvc
+        labels:
+          app: minio
+          name: minio-pvc
+      spec:
+        storageClassName: do-block-storage
+        accessModes: [ ReadWriteOncePod ]
+        resources:
+          requests:
+            storage: 1Gi
+  template:
+    metadata:
+      name: minio-po
+      labels:
+        app: minio
+        name: minio-po
+    spec:
+      containers:
+        - name: minio-container
+          image: bitnami/minio:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - minio
+            - server
+            - --address=:9000
+            - --console-address=:9090
+            - minio-sts-{0...3}.minio-hsvc.minions.svc.cluster.local # access individual pods using headless service
+          envFrom:
+            - configMapRef:
+                name: minio-cm
+            - secretRef:
+                name: minio-secret
+          ports:
+            - name: minio-portc
+              containerPort: 9000
+            - name: minio-portw
+              containerPort: 9090
+          volumeMounts:
+            - name: minio-pvc
+              mountPath: /bitnami/minio/data
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /minio/health/ready
+              port: 9000
+            initialDelaySeconds: 300
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: 9000
+            initialDelaySeconds: 300
+            periodSeconds: 10
+          resources:
+            requests: # lower limit
+              cpu: 200m
+              memory: 250Mi
+            limits: # upperbound
+              cpu: 200m
+              memory: 250Mi
+
+
+

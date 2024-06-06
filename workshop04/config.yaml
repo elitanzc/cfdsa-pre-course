@@ -1,0 +1,37 @@
+---
+# Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: minions
+
+---
+# Configmap for env
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: minio-cm
+  namespace: minions
+  labels:
+    app: minio
+    name: minio-cm
+data:
+  MINIO_ROOT_USER: minio
+  MINIO_DATA_DIR: /bitnami/minio/data
+  MINIO_CI_CD: "1"
+
+---
+# Secrets for env
+apiVersion: v1
+kind: Secret
+metadata:
+  name: minio-secret
+  namespace: minions
+  labels:
+    app: minio
+    name: minio-secret
+type: Opaque
+data:
+  MINIO_ROOT_PASSWORD: bWluaW9zZWNyZXQ= # miniosecret
+
+---

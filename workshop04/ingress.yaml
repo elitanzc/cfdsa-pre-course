@@ -1,0 +1,56 @@
+---
+# Headful service
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-svc
+  namespace: minions
+  labels:
+    app: minio
+    name: minio-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: minio
+    name: minio-po
+  ports:
+    - name: minio-svc-portc
+      port: 9000
+      targetPort: minio-portc # 9000
+    - name: minio-svc-portw
+      port: 9090
+      targetPort: minio-portw # 9090
+
+---
+# Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio-ing
+  namespace: minions
+  labels:
+    app: minio
+    name: minio-ing
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: data-139.59.193.132.nip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: minio-svc
+                port:
+                  name: minio-svc-portc
+    - host: console-139.59.193.132.nip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: minio-svc
+                port:
+                  name: minio-svc-portw
