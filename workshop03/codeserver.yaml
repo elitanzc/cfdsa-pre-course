@@ -41,6 +41,13 @@ spec:
                 name: codeserver-cm
             - secretRef:
                 name: codeserver-secret
+          resources:
+            requests: # lower limit
+              cpu: 16m # 200m
+              memory: 16Mi #256Mi
+            limits: # upperbound
+              cpu: 16m
+              memory: 16Mi
 
 ---
 apiVersion: v1
