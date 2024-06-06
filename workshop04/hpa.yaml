@@ -1,0 +1,30 @@
+---
+# autoscaling
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: minio-hpa
+  namespace: minions
+  labels:
+    app: minio
+    name: minio-hpa
+spec:
+  minReplicas: 4
+  maxReplicas: 10
+  scaleTargetRef: # what object are we scaling
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: minio-sts
+  metrics:
+    - type: Resource # cpu
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 75
+    - type: Resource # memory
+      resource:
+        name: memory
+        target: 
+          type: Utilization
+          averageUtilization: 75
