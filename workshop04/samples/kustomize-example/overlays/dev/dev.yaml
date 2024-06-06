@@ -1,0 +1,159 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"labels":{"env":"development"},"name":"dev-myns"}}
+    labels:
+      env: development
+    name: dev-myns
+- apiVersion: v1
+  data:
+    INSTANCE_NAME: name from configmap heheh
+    db.conf: |
+      contents of the db.conf file
+      line 2 of the file
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"INSTANCE_NAME":"name from configmap heheh","db.conf":"contents of the db.conf file\nline 2 of the file\n"},"kind":"ConfigMap","metadata":{"annotations":{},"labels":{"app":"dov","env":"development","name":"dov-cm"},"name":"dev-dov-cm","namespace":"dev-myns"}}
+    labels:
+      app: dov
+      env: development
+      name: dov-cm
+    name: dev-dov-cm
+    namespace: dev-myns
+- apiVersion: v1
+  data:
+    INSTANCE_HASH: dGhpcyBpcyBhIHNlY3JldA==
+  kind: Secret
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","data":{"INSTANCE_HASH":"dGhpcyBpcyBhIHNlY3JldA=="},"kind":"Secret","metadata":{"annotations":{},"labels":{"app":"dov","env":"development","name":"dov-secret"},"name":"dev-dov-secret","namespace":"dev-myns"},"type":"Opaque"}
+    labels:
+      app: dov
+      env: development
+      name: dov-secret
+    name: dev-dov-secret
+    namespace: dev-myns
+  type: Opaque
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"dov","env":"development","name":"dov-svc"},"name":"dev-dov-svc","namespace":"dev-myns"},"spec":{"ports":[{"name":"dov-svc-port","port":8080,"targetPort":"dov-port"}],"selector":{"app":"dov","env":"development","name":"dov-po"},"type":"ClusterIP"}}
+    labels:
+      app: dov
+      env: development
+      name: dov-svc
+    name: dev-dov-svc
+    namespace: dev-myns
+  spec:
+    ports:
+    - name: dov-svc-port
+      port: 8080
+      targetPort: dov-port
+    selector:
+      app: dov
+      env: development
+      name: dov-po
+    type: ClusterIP
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"dov","env":"development","name":"dov-deploy"},"name":"dev-dov-deploy","namespace":"dev-myns"},"spec":{"replicas":4,"selector":{"matchLabels":{"app":"dov","env":"development","name":"dov-po"}},"template":{"metadata":{"labels":{"app":"dov","env":"development","name":"dov-po"},"name":"dov-po","namespace":"myns"},"spec":{"containers":[{"env":[{"name":"INSTANCE_HASH","valueFrom":{"fieldRef":{"fieldPath":"status.podIP"}}}],"envFrom":[{"configMapRef":{"name":"dev-dov-cm"}}],"image":"chukmunnlee/cfdsa-dov-bear:v1.1","imagePullPolicy":"IfNotPresent","livenessProbe":{"httpGet":{"path":"/healthz","port":3000}},"name":"dov-container","ports":[{"containerPort":3000,"name":"dov-port"}],"resources":{"limits":{"cpu":"16m","memory":"16Mi"},"requests":{"cpu":"16m","memory":"16Mi"}},"volumeMounts":[{"mountPath":"/opt/configmap","name":"cm-vol"},{"mountPath":"/opt/secrets","name":"secret-vol","readOnly":true}]}],"volumes":[{"configMap":{"name":"dev-dov-cm"},"name":"cm-vol"},{"name":"secret-vol","secret":{"secretName":"dev-dov-secret"}}]}}}}
+    labels:
+      app: dov
+      env: development
+      name: dov-deploy
+    name: dev-dov-deploy
+    namespace: dev-myns
+  spec:
+    replicas: 4
+    selector:
+      matchLabels:
+        app: dov
+        env: development
+        name: dov-po
+    template:
+      metadata:
+        labels:
+          app: dov
+          env: development
+          name: dov-po
+        name: dov-po
+        namespace: myns
+      spec:
+        containers:
+        - env:
+          - name: INSTANCE_HASH
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+          envFrom:
+          - configMapRef:
+              name: dev-dov-cm
+          image: chukmunnlee/cfdsa-dov-bear:v1.1
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+          name: dov-container
+          ports:
+          - containerPort: 3000
+            name: dov-port
+          resources:
+            limits:
+              cpu: 16m
+              memory: 16Mi
+            requests:
+              cpu: 16m
+              memory: 16Mi
+          volumeMounts:
+          - mountPath: /opt/configmap
+            name: cm-vol
+          - mountPath: /opt/secrets
+            name: secret-vol
+            readOnly: true
+        volumes:
+        - configMap:
+            name: dev-dov-cm
+          name: cm-vol
+        - name: secret-vol
+          secret:
+            secretName: dev-dov-secret
+- apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{},"labels":{"app":"dov","env":"development","name":"dov-ing"},"name":"dev-dov-ing","namespace":"dev-myns"},"spec":{"ingressClassName":"nginx","rules":[{"host":"dov-bear.139.59.193.132.nip.io","http":{"paths":[{"backend":{"service":{"name":"dev-dov-svc","port":{"name":"dov-svc-port"}}},"path":"/","pathType":"Prefix"}]}}]}}
+    labels:
+      app: dov
+      env: development
+      name: dov-ing
+    name: dev-dov-ing
+    namespace: dev-myns
+  spec:
+    ingressClassName: nginx
+    rules:
+    - host: dov-bear.139.59.193.132.nip.io
+      http:
+        paths:
+        - backend:
+            service:
+              name: dev-dov-svc
+              port:
+                name: dov-svc-port
+          path: /
+          pathType: Prefix
+kind: List
+metadata: {}
